@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinite Scrolling</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 1000px;
+      margin: 20px auto;
+    }
+
+    #gallery img {
+      margin: 10px;
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease;
+    }
+
+    #gallery img:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div id="gallery"></div>
+  <script>
+    let page = 1;
+    const limit = 10;
+    const gallery = document.getElementById('gallery');
+    const apiUrl = 'http://localhost:3000/photos';
+
+    const fetchPhotos = async (page, limit) => {
+      try {
+        const response = await fetch(`${apiUrl}?_page=${page}&_limit=${limit}`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const photos = await response.json();
+        return photos;
+      } catch (error) {
+        console.error('Fetching photos failed:', error);
+        return [];
+      }
+    };
+
+    const displayPhotos = photos => {
+      photos.forEach(photo => {
+        const imgElement = document.createElement('img');
+        imgElement.src = photo.thumbnailUrl;
+        imgElement.alt = photo.title;
+        gallery.appendChild(imgElement);
+      });
+    };
+
+    const loadMorePhotos = async () => {
+      const photos = await fetchPhotos(page, limit);
+      displayPhotos(photos);
+      page++;
+    };
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+
+      if (scrollTop + clientHeight >= scrollHeight - 5) {
+        loadMorePhotos();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMorePhotos();
+    });
+  </script>
+</body>
+</html>
